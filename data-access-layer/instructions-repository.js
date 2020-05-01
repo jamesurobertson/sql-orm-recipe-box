@@ -1,11 +1,11 @@
 const { Op } = require('sequelize');
-let Instruction;
+let Instructions;
 let moduleError;
 
 try {
   const db = require('../models');
-  ({ Instruction } = db);
-  if (Instruction === undefined) {
+  ({ Instructions } = db);
+  if (Instructions === undefined) {
     moduleError = 'It looks like you need to generate the Instruction model.';
   }
 } catch (e) {
@@ -28,6 +28,20 @@ async function createNewInstruction(specification, recipeId) {
   // return it using the maximum listOrder from the query just before this.
   //
   // Docs: https://sequelize.org/v5/manual/instances.html#creating-persistent-instances
+  const currentInstructions = await Instructions.findAll({
+    where: {
+      recipeId
+    }
+  })
+
+  const listOrders = currentInstructions.map(i => i.listOrder).concat(0);
+  await Instructions.create({
+    specification,
+    recipeId,
+    listOrder: Math.max(...listOrders) + 1
+
+  })
+
 }
 
 

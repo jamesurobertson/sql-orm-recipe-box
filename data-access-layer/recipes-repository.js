@@ -1,11 +1,11 @@
 const { Op } = require('sequelize');
-let Recipe, Instruction, Ingredient, MeasurementUnit;
+let Recipes, Instructions, Ingredients, MeasurementUnit;
 let moduleError;
 
 try {
   const db = require('../models');
-  ({ Recipe, Instruction, Ingredient, MeasurementUnit } = db);
-  if (Recipe === undefined) {
+  ({ Recipes, Instructions, Ingredients, MeasurementUnit } = db);
+  if (Recipes === undefined) {
     moduleError = 'It looks like you need to generate the Recipe model.';
   }
 } catch (e) {
@@ -34,7 +34,14 @@ async function getTenNewestRecipes() {
   // });
   //
   // Docs: https://sequelize.org/master/class/lib/model.js~Model.html#static-method-findAll
+
+  return await Recipes.findAll({
+    order: [["updatedAt", "DESC"]],
+    limit: 10
+  })
+
 }
+
 
 async function getRecipeById(id) {
   // Use the findByPk method of the Recipe object to return the recipe. Use
@@ -71,6 +78,17 @@ async function getRecipeById(id) {
   // Here are links to the wholly-inadequate docs for this.
   // Docs: https://sequelize.org/v5/manual/models-usage.html#eager-loading
   //       https://sequelize.org/v5/manual/models-usage.html#nested-eager-loading
+
+  return await Recipes.findByPk(id, {
+    include: [
+      Instructions,
+      {
+        model: Ingredients,
+        include: [MeasurementUnit]
+      }
+    ]
+  });
+
 }
 
 async function deleteRecipe(id) {
@@ -79,6 +97,9 @@ async function deleteRecipe(id) {
   // saw in the video.
   //
   // Docs: https://sequelize.org/master/class/lib/model.js~Model.html#instance-method-destroy
+ const rec = await Recipes.findByPk(id)
+ rec.destroy();
+
 }
 
 async function createNewRecipe(title) {
@@ -86,6 +107,9 @@ async function createNewRecipe(title) {
   // return it.
   //
   // Docs: https://sequelize.org/v5/manual/instances.html#creating-persistent-instances
+
+  return await Recipes.create({title: title})
+
 }
 
 async function searchRecipes(term) {
@@ -93,6 +117,14 @@ async function searchRecipes(term) {
   // given term in its title
   //
   // Docs: https://sequelize.org/v5/manual/querying.html
+
+  return await Recipes.findAll({
+    where: {
+      title: {
+        [Op.substring]: term
+      }
+    }
+  })
 }
 
 
